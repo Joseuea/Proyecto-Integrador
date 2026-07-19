@@ -16,6 +16,11 @@ const alertaFormulario = document.getElementById("alertaFormulario");
 const listaPedidos = document.getElementById("listaPedidos");
 const contadorPedidos = document.getElementById("contadorPedidos");
 const mensajeVacio = document.getElementById("mensajeVacio");
+const botonRegistrar = document.getElementById("botonRegistrar");
+const detalleNumero = document.getElementById("detalleNumero");
+const detalleNombre = document.getElementById("detalleNombre");
+const detalleCategoria = document.getElementById("detalleCategoria");
+const detalleDescripcion = document.getElementById("detalleDescripcion");
 
 /* Arreglo con las solicitudes (más adelante estos datos vendrán de una base de datos con Flask) */
 let solicitudes = [
@@ -142,6 +147,18 @@ function renderizarSolicitudes() {
         descripcion.className = "m-0 text-muted";
         descripcion.textContent = solicitud.descripcion;
 
+        const botones = document.createElement("div");
+        botones.className = "d-flex flex-column gap-2";
+
+        const botonVer = document.createElement("button");
+        botonVer.className = "btn btn-outline-obra btn-sm";
+        botonVer.textContent = "👁 Ver";
+
+        // Al hacer clic se abre el modal con el detalle de la solicitud
+        botonVer.addEventListener("click", function () {
+            mostrarDetalle(solicitud);
+        });
+
         const botonEliminar = document.createElement("button");
         botonEliminar.className = "btn btn-outline-danger btn-sm";
         botonEliminar.textContent = "🗑 Eliminar";
@@ -151,12 +168,15 @@ function renderizarSolicitudes() {
             eliminarSolicitud(solicitud.id);
         });
 
+        botones.appendChild(botonVer);
+        botones.appendChild(botonEliminar);
+
         // Armo la tarjeta y la agrego a la página
         contenido.appendChild(titulo);
         contenido.appendChild(categoria);
         contenido.appendChild(descripcion);
         fila.appendChild(contenido);
-        fila.appendChild(botonEliminar);
+        fila.appendChild(botones);
         cuerpo.appendChild(fila);
         tarjeta.appendChild(cuerpo);
         columna.appendChild(tarjeta);
@@ -164,6 +184,17 @@ function renderizarSolicitudes() {
     }
 
     actualizarContador();
+}
+
+// Llena el modal con los datos de la solicitud y lo abre
+function mostrarDetalle(solicitud) {
+    detalleNumero.textContent = solicitud.id;
+    detalleNombre.textContent = solicitud.nombre;
+    detalleCategoria.textContent = solicitud.categoria;
+    detalleDescripcion.textContent = solicitud.descripcion;
+
+    const modal = new bootstrap.Modal(document.getElementById("modalDetalle"));
+    modal.show();
 }
 
 // Actualiza el total de solicitudes
@@ -216,9 +247,19 @@ formularioPedido.addEventListener("submit", function (evento) {
     const categoriaValida = validarCategoria();
 
     if (nombreValido && descripcionValida && categoriaValida) {
-        registrarSolicitud();
-        limpiarFormulario();
-        mostrarAlerta("¡Solicitud registrada con éxito! Pronto nos contactaremos.", "success");
+        // Muestro un spinner en el botón para simular el proceso de guardado
+        botonRegistrar.disabled = true;
+        botonRegistrar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Registrando...';
+
+        setTimeout(function () {
+            registrarSolicitud();
+            limpiarFormulario();
+            mostrarAlerta("¡Solicitud registrada con éxito! Pronto nos contactaremos.", "success");
+
+            // Restauro el botón a su estado normal
+            botonRegistrar.disabled = false;
+            botonRegistrar.textContent = "Registrar solicitud";
+        }, 1000);
     } else {
         mostrarAlerta("Revise los campos marcados en rojo.", "danger");
     }

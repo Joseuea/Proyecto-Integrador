@@ -208,7 +208,7 @@
                                         <div class="valid-feedback">¡Categoría seleccionada!</div>
                                     </div>
 
-                                    <button type="submit" class="btn btn-obra w-100">Registrar solicitud</button>
+                                    <button type="submit" class="btn btn-obra w-100" id="botonRegistrar">Registrar solicitud</button>
                                 </form>
 
                                 <!-- Alerta de éxito o error del formulario -->
@@ -313,7 +313,28 @@
         <p class="m-0 small">Proyecto Integrador: JM Ferretería — Construyendo tus sueños 🔧</p>
     </footer>
 
-    <!-- JavaScript de Bootstrap (necesario para el menú en celulares) -->
+    <!-- Modal para ver el detalle de una solicitud -->
+    <div class="modal fade" id="modalDetalle" tabindex="-1" aria-labelledby="modalDetalleTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header cabecera-principal text-white">
+                    <h5 class="modal-title" id="modalDetalleTitulo">Detalle de la solicitud</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2"><strong>N°:</strong> <span id="detalleNumero"></span></p>
+                    <p class="mb-2"><strong>Cliente:</strong> <span id="detalleNombre"></span></p>
+                    <p class="mb-2"><strong>Categoría:</strong> <span id="detalleCategoria" class="badge bg-obra"></span></p>
+                    <p class="mb-0"><strong>Pedido:</strong> <span id="detalleDescripcion"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript de Bootstrap (necesario para el menú en celulares y el modal) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Mi archivo JavaScript -->
