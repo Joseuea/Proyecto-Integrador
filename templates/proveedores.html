@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo_modulo }} | {{ empresa }}{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center titulo-seccion mb-4">Módulo de {{ titulo_modulo|upper }}</h2>
+        <p class="text-center text-muted mb-4">
+            Empresas que abastecen de materiales a {{ empresa }}.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fs-5 m-0">Listado de proveedores</h3>
+            <span class="badge bg-obra fs-6">Total: {{ proveedores|length }}</span>
+        </div>
+
+        <div class="table-responsive shadow-sm">
+            <table class="table table-striped table-hover align-middle m-0 tabla-modulo">
+                <thead>
+                    <tr>
+                        <th>RUC</th>
+                        <th>Empresa</th>
+                        <th>Producto que provee</th>
+                        <th>Contacto</th>
+                        <th>Teléfono</th>
+                        <th class="text-center">Convenio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proveedor in proveedores %}
+                    <tr>
+                        <td>{{ proveedor.ruc }}</td>
+                        <td class="fw-bold">{{ proveedor.empresa|upper }}</td>
+                        <td><span class="badge bg-secondary">{{ proveedor.producto }}</span></td>
+                        <td>{{ proveedor.contacto }}</td>
+                        <td>{{ proveedor.telefono }}</td>
+                        <td class="text-center">
+                            <!-- Marco cuáles proveedores tienen convenio vigente -->
+                            {% if proveedor.convenio %}
+                            <span class="badge bg-success">Con convenio</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Sin convenio</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

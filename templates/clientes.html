@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo_modulo }} | {{ empresa }}{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center titulo-seccion mb-4">Módulo de {{ titulo_modulo|upper }}</h2>
+        <p class="text-center text-muted mb-4">
+            Clientes registrados en el sistema de {{ empresa }}.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fs-5 m-0">Listado de clientes</h3>
+            <span class="badge bg-obra fs-6">Total: {{ clientes|length }}</span>
+        </div>
+
+        <!-- Cada cliente se genera con un bucle, sin repetir el HTML -->
+        <div class="row g-4">
+            {% for cliente in clientes %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm tarjeta-producto">
+                    <div class="card-body text-center">
+                        <div class="icono-tarjeta">👤</div>
+                        <h3 class="card-title fs-6">{{ cliente.nombre|title }}</h3>
+                        <p class="card-text small text-muted m-0">Cédula / RUC: {{ cliente.cedula }}</p>
+                        <p class="card-text small text-muted">📱 {{ cliente.telefono }}</p>
+                        <p class="card-text small">📍 {{ cliente.ciudad }}</p>
+                        <span class="badge bg-obra">{{ cliente.tipo }}</span>
+
+                        <!-- Distingo entre clientes activos e inactivos -->
+                        {% if cliente.activo %}
+                        <span class="badge bg-success">Activo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactivo</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}
