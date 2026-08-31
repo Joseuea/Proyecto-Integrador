@@ -3,9 +3,15 @@ app.py - Aplicación web de JM Ferretería
 Rutas del sistema y datos que se envían a las plantillas.
 """
 
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for, flash
+
+from forms import ProductoForm, ClienteForm, ProveedorForm, FacturacionForm
 
 app = Flask(__name__)
+
+# Clave necesaria para la protección CSRF de los formularios
+app.config['SECRET_KEY'] = 'jm-ferreteria-clave-secreta-2026'
+
 
 # ----------------------------------------------------------
 # Datos generales del negocio
@@ -145,6 +151,149 @@ def facturacion():
         facturas=facturas_lista,
         total_facturado=total_facturado,
         total_pendiente=total_pendiente
+    )
+
+
+
+# ----------------------------------------------------------
+# Rutas de los formularios
+# Cada una acepta GET para mostrar el formulario
+# y POST para procesar los datos enviados.
+# ----------------------------------------------------------
+
+@app.route('/productos/nuevo', methods=['GET', 'POST'])
+def nuevo_producto():
+    """Registra un producto nuevo en el inventario."""
+    form = ProductoForm()
+
+    # validate_on_submit() es True solo si se envió por POST y pasó las validaciones
+    if form.validate_on_submit():
+        productos_lista.append({
+            "codigo": form.codigo.data.upper(),
+            "nombre": form.nombre.data,
+            "categoria": form.categoria.data,
+            "stock": form.stock.data,
+            "precio": form.precio.data
+        })
+        flash(f"El producto {form.nombre.data} fue registrado correctamente.", "success")
+        return redirect(url_for('productos'))
+
+    return render_template(
+        'formulario_producto.html',
+        titulo_modulo="Nuevo producto",
+        form=form,
+        accion="Registrar"
+    )
+
+
+@app.route('/productos/editar/<codigo>', methods=['GET', 'POST'])
+def editar_producto(codigo):
+    """Edita un producto usando la misma clase de formulario."""
+    # Busco el producto por su código
+    producto = next((p for p in productos_lista if p["codigo"] == codigo), None)
+
+    if producto is None:
+        flash("El producto solicitado no existe.", "danger")
+        return redirect(url_for('productos'))
+
+    # obj=producto carga los datos actuales en el formulario
+    form = ProductoForm(data=producto)
+
+    if form.validate_on_submit():
+        producto["codigo"] = form.codigo.data.upper()
+        producto["nombre"] = form.nombre.data
+        producto["categoria"] = form.categoria.data
+        producto["stock"] = form.stock.data
+        producto["precio"] = form.precio.data
+        flash(f"El producto {form.nombre.data} fue actualizado.", "success")
+        return redirect(url_for('productos'))
+
+    return render_template(
+        'formulario_producto.html',
+        titulo_modulo="Editar producto",
+        form=form,
+        accion="Actualizar"
+    )
+
+
+@app.route('/clientes/nuevo', methods=['GET', 'POST'])
+def nuevo_cliente():
+    """Registra un cliente nuevo."""
+    form = ClienteForm()
+
+    if form.validate_on_submit():
+        clientes_lista.append({
+            "cedula": form.cedula.data,
+            "nombre": form.nombre.data,
+            "telefono": form.telefono.data,
+            "correo": form.correo.data,
+            "ciudad": form.ciudad.data,
+            "tipo": form.tipo.data,
+            "activo": form.activo.data
+        })
+        flash(f"El cliente {form.nombre.data} fue registrado correctamente.", "success")
+        return redirect(url_for('clientes'))
+
+    return render_template(
+        'formulario_cliente.html',
+        titulo_modulo="Nuevo cliente",
+        form=form,
+        accion="Registrar"
+    )
+
+
+@app.route('/proveedores/nuevo', methods=['GET', 'POST'])
+def nuevo_proveedor():
+    """Registra un proveedor nuevo."""
+    form = ProveedorForm()
+
+    if form.validate_on_submit():
+        proveedores_lista.append({
+            "ruc": form.ruc.data,
+            "empresa": form.empresa.data,
+            "producto": form.producto.data,
+            "contacto": form.contacto.data,
+            "telefono": form.telefono.data,
+            "correo": form.correo.data,
+            "convenio": form.convenio.data
+        })
+        flash(f"El proveedor {form.empresa.data} fue registrado correctamente.", "success")
+        return redirect(url_for('proveedores'))
+
+    return render_template(
+        'formulario_proveedor.html',
+        titulo_modulo="Nuevo proveedor",
+        form=form,
+        accion="Registrar"
+    )
+
+
+@app.route('/facturacion/nueva', methods=['GET', 'POST'])
+def nueva_factura():
+    """Registra una factura nueva."""
+    form = FacturacionForm()
+
+    # Cargo la lista de clientes en el desplegable
+    form.cliente.choices = [("", "-- Seleccione un cliente --")] + [
+        (c["nombre"], c["nombre"]) for c in clientes_lista
+    ]
+
+    if form.validate_on_submit():
+        facturas_lista.append({
+            "numero": form.numero.data,
+            "fecha": form.fecha.data.strftime("%Y-%m-%d"),
+            "cliente": form.cliente.data,
+            "total": form.total.data,
+            "estado": form.estado.data
+        })
+        flash(f"La factura {form.numero.data} fue registrada correctamente.", "success")
+        return redirect(url_for('facturacion'))
+
+    return render_template(
+        'formulario_facturacion.html',
+        titulo_modulo="Nueva factura",
+        form=form,
+        accion="Registrar"
     )
 
 

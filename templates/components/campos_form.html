@@ -1,0 +1,45 @@
+{# Componente reutilizable: dibuja un campo del formulario con su etiqueta,
+   sus estilos de Bootstrap y los mensajes de error de los validadores.
+   Se usa así: {{ campo(form.nombre) }} #}
+
+{% macro campo(elemento) %}
+<div class="mb-3">
+    {{ elemento.label(class="form-label") }}
+
+    {# Si el campo tiene errores lo marco en rojo con is-invalid #}
+    {% if elemento.errors %}
+    {{ elemento(class="form-control is-invalid") }}
+    {% for error in elemento.errors %}
+    <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+    {% else %}
+    {{ elemento(class="form-control") }}
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+{# Igual que el anterior pero para las listas desplegables #}
+{% macro campo_select(elemento) %}
+<div class="mb-3">
+    {{ elemento.label(class="form-label") }}
+
+    {% if elemento.errors %}
+    {{ elemento(class="form-select is-invalid") }}
+    {% for error in elemento.errors %}
+    <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+    {% else %}
+    {{ elemento(class="form-select") }}
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+{# Para las casillas de verificación #}
+{% macro campo_check(elemento) %}
+<div class="form-check mb-3">
+    {{ elemento(class="form-check-input") }}
+    {{ elemento.label(class="form-check-label") }}
+</div>
+{% endmacro %}

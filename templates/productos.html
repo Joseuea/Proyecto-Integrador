@@ -17,6 +17,7 @@
             <div>
                 <span class="badge bg-obra fs-6">Total: {{ productos|length }}</span>
                 <span class="badge bg-danger fs-6">Agotados: {{ total_agotados }}</span>
+                <a href="{{ url_for('nuevo_producto') }}" class="btn btn-obra btn-sm ms-2">+ Nuevo producto</a>
             </div>
         </div>
 
@@ -30,6 +31,7 @@
                         <th class="text-center">Stock</th>
                         <th class="text-end">Precio</th>
                         <th class="text-center">Estado</th>
+                        <th class="text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -48,6 +50,10 @@
                             {% else %}
                             <span class="badge bg-danger">Agotado</span>
                             {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('editar_producto', codigo=producto.codigo) }}"
+                                class="btn btn-outline-obra btn-sm">✏️ Editar</a>
                         </td>
                     </tr>
                     {% endfor %}

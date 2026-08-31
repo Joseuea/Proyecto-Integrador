@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "components/campos_form.html" import campo, campo_select %}
+
+{% block title %}{{ titulo_modulo }} | {{ empresa }}{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center titulo-seccion mb-4">{{ titulo_modulo|upper }}</h2>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+
+                        <!-- El formulario se envía por POST a la misma ruta -->
+                        <form method="POST" novalidate>
+                            <!-- Token de seguridad contra ataques CSRF -->
+                            {{ form.hidden_tag() }}
+
+                            {{ campo(form.codigo) }}
+                            {{ campo(form.nombre) }}
+                            {{ campo_select(form.categoria) }}
+
+                            <div class="row">
+                                <div class="col-md-6">{{ campo(form.stock) }}</div>
+                                <div class="col-md-6">{{ campo(form.precio) }}</div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                {{ form.submit(class="btn btn-obra w-100") }}
+                                <a href="{{ url_for('productos') }}" class="btn btn-secondary w-100">Cancelar</a>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+                <p class="text-center text-muted small mt-3">
+                    Los campos marcados en rojo deben corregirse antes de guardar.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
