@@ -7,6 +7,7 @@ from flask import Flask, render_template, redirect, url_for, flash
 from flask_wtf.csrf import CSRFProtect
 
 import database as bd
+import conexion
 from forms import ProductoForm, ClienteForm, ProveedorForm, FacturacionForm
 
 app = Flask(__name__)
@@ -17,9 +18,12 @@ app.config['SECRET_KEY'] = 'jm-ferreteria-clave-secreta-2026'
 # Activa la protección CSRF en toda la aplicación
 csrf = CSRFProtect(app)
 
-# Preparo la base de datos al iniciar la aplicación
-bd.crear_tablas()
-bd.cargar_datos_iniciales()
+# Compruebo que la base de datos MySQL responda al iniciar
+if conexion.probar_conexion():
+    print("Conexión con MySQL establecida correctamente.")
+else:
+    print("ATENCIÓN: no se pudo conectar con MySQL.")
+    print("Revise que el servidor esté encendido y que haya ejecutado sql/esquema.sql")
 
 
 # ----------------------------------------------------------
@@ -57,6 +61,13 @@ informacion_contacto = {
     "direccion": "Panamericana Norte, sector del hierro y los cisnes, Carapungo, Quito",
     "horario": "Lunes a sábado, de 07h30 a 18h00"
 }
+
+
+def cargar_proveedores(form):
+    """Llena el desplegable de proveedores del formulario de productos."""
+    form.id_proveedor.choices = [("", "-- Sin proveedor asignado --")] + [
+        (str(p["id_proveedor"]), p["empresa"]) for p in bd.listar_proveedores()
+    ]
 
 
 # ----------------------------------------------------------
@@ -128,6 +139,7 @@ def facturacion():
 def nuevo_producto():
     """Registra un producto nuevo en la base de datos."""
     form = ProductoForm()
+    cargar_proveedores(form)
 
     # Solo entra aquí si se envió por POST y pasó todas las validaciones
     if form.validate_on_submit():
@@ -142,7 +154,8 @@ def nuevo_producto():
                 form.nombre.data,
                 form.categoria.data,
                 form.stock.data,
-                form.precio.data
+                form.precio.data,
+                form.id_proveedor.data or None
             )
             flash(f"El producto {form.nombre.data} fue registrado correctamente.", "success")
             return redirect(url_for('productos'))
@@ -165,7 +178,11 @@ def editar_producto(id_producto):
         return redirect(url_for('productos'))
 
     # Cargo los datos actuales del producto en el formulario
+    if producto.get("id_proveedor") is not None:
+        producto["id_proveedor"] = str(producto["id_proveedor"])
+
     form = ProductoForm(data=producto)
+    cargar_proveedores(form)
 
     if form.validate_on_submit():
         codigo = form.codigo.data.upper()
@@ -179,7 +196,8 @@ def editar_producto(id_producto):
                 form.nombre.data,
                 form.categoria.data,
                 form.stock.data,
-                form.precio.data
+                form.precio.data,
+                form.id_proveedor.data or None
             )
             flash(f"El producto {form.nombre.data} fue actualizado.", "success")
             return redirect(url_for('productos'))
@@ -263,9 +281,9 @@ def nueva_factura():
     """Registra una factura nueva."""
     form = FacturacionForm()
 
-    # Cargo en el desplegable los clientes guardados en la base de datos
+    # El desplegable guarda el id_cliente, que es la clave foránea
     form.cliente.choices = [("", "-- Seleccione un cliente --")] + [
-        (c["nombre"], c["nombre"]) for c in bd.listar_clientes()
+        (str(c["id_cliente"]), c["nombre"]) for c in bd.listar_clientes()
     ]
 
     if form.validate_on_submit():

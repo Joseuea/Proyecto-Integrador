@@ -5,7 +5,7 @@ La misma clase sirve para registrar y para editar un producto.
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, FloatField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Length, NumberRange
+from wtforms.validators import DataRequired, Length, NumberRange, Optional
 
 
 class ProductoForm(FlaskForm):
@@ -53,6 +53,15 @@ class ProductoForm(FlaskForm):
             DataRequired(message="El precio es obligatorio."),
             NumberRange(min=0.01, max=5000, message="El precio debe estar entre $0.01 y $5000.")
         ]
+    )
+
+    # Las opciones de proveedores se cargan desde app.py.
+    # Este campo guarda la clave foránea id_proveedor.
+    id_proveedor = SelectField(
+        "Proveedor",
+        choices=[],
+        coerce=str,
+        validators=[Optional()]
     )
 
     submit = SubmitField("Guardar producto")
