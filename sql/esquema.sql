@@ -77,6 +77,20 @@ CREATE TABLE IF NOT EXISTS facturas (
 );
 
 
+
+-- ------------------------------------------------------------
+-- Tabla de usuarios del sistema
+-- La contraseña nunca se guarda en texto plano: se almacena
+-- el hash generado con generate_password_hash().
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(80) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+
 -- ============================================================
 -- Datos de ejemplo
 -- ============================================================

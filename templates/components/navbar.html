@@ -9,10 +9,27 @@
         <div class="collapse navbar-collapse" id="menuPrincipal">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Inicio</a></li>
+
+                <!-- Los módulos del sistema solo aparecen con la sesión iniciada -->
+                {% if current_user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Panel</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('productos') }}">Productos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('clientes') }}">Clientes</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('facturacion') }}">Facturación</a></li>
+
+                <!-- Nombre del usuario que tiene la sesión activa -->
+                <li class="nav-item">
+                    <span class="nav-link usuario-activo">👤 {{ current_user.nombre }}</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-bold" href="{{ url_for('logout') }}">Cerrar sesión</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link fw-bold" href="{{ url_for('login') }}">Iniciar sesión</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>

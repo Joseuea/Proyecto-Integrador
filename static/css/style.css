@@ -198,3 +198,15 @@ body {
         margin-right: 0 !important;
     }
 }
+
+/* Tarjeta de las páginas de login y registro */
+.tarjeta-acceso {
+    border: none;
+    border-top: 5px solid var(--color-naranja);
+}
+
+/* Nombre del usuario con la sesión activa en el menú */
+.usuario-activo {
+    color: var(--color-amarillo) !important;
+    font-weight: 600;
+}

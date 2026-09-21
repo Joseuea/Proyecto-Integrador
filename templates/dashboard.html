@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo_modulo }} | {{ empresa }}{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <!-- current_user es el usuario que tiene la sesión activa -->
+        <h2 class="text-center titulo-seccion mb-4">{{ titulo_modulo|upper }}</h2>
+        <p class="text-center text-muted mb-4">
+            Bienvenido, <strong>{{ current_user.nombre }}</strong>.
+            Desde aquí puede administrar los módulos de {{ empresa }}.
+        </p>
+
+        <!-- Resumen general del sistema -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm tarjeta-producto text-center">
+                    <div class="card-body">
+                        <div class="icono-tarjeta">🏗️</div>
+                        <h3 class="fs-6">Productos</h3>
+                        <p class="fs-4 fw-bold m-0">{{ total_productos }}</p>
+                        {% if total_agotados > 0 %}
+                        <span class="badge bg-danger">{{ total_agotados }} agotado(s)</span>
+                        {% else %}
+                        <span class="badge bg-success">Todo con stock</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm tarjeta-producto text-center">
+                    <div class="card-body">
+                        <div class="icono-tarjeta">👥</div>
+                        <h3 class="fs-6">Clientes</h3>
+                        <p class="fs-4 fw-bold m-0">{{ total_clientes }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm tarjeta-producto text-center">
+                    <div class="card-body">
+                        <div class="icono-tarjeta">🚚</div>
+                        <h3 class="fs-6">Proveedores</h3>
+                        <p class="fs-4 fw-bold m-0">{{ total_proveedores }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm tarjeta-producto text-center">
+                    <div class="card-body">
+                        <div class="icono-tarjeta">🧾</div>
+                        <h3 class="fs-6">Facturas</h3>
+                        <p class="fs-4 fw-bold m-0">{{ total_facturas }}</p>
+                        <span class="badge bg-obra">${{ "%.2f"|format(total_facturado) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accesos a los módulos -->
+        <h3 class="fs-5 mb-3">Módulos del sistema</h3>
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-3">
+                <a href="{{ url_for('productos') }}" class="btn btn-obra w-100 py-3">🏗️ Productos</a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="{{ url_for('clientes') }}" class="btn btn-obra w-100 py-3">👥 Clientes</a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="{{ url_for('proveedores') }}" class="btn btn-obra w-100 py-3">🚚 Proveedores</a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="{{ url_for('facturacion') }}" class="btn btn-obra w-100 py-3">🧾 Facturación</a>
+            </div>
+        </div>
+
+        <!-- Aviso de cobros pendientes -->
+        {% if total_pendiente > 0 %}
+        <div class="alert alert-warning mt-4 text-center">
+            Existen valores pendientes de cobro por ${{ "%.2f"|format(total_pendiente) }}.
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}

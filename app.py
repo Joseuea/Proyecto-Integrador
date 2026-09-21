@@ -3,20 +3,48 @@ app.py - Aplicación web de JM Ferretería
 Rutas del sistema, formularios y conexión con la base de datos.
 """
 
-from flask import Flask, render_template, redirect, url_for, flash
+import os
+
+from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_wtf.csrf import CSRFProtect
+from flask_login import (
+    LoginManager, login_user, logout_user,
+    login_required, current_user
+)
+from werkzeug.security import generate_password_hash, check_password_hash
 
 import database as bd
 import conexion
-from forms import ProductoForm, ClienteForm, ProveedorForm, FacturacionForm
+import models
+from forms import (
+    ProductoForm, ClienteForm, ProveedorForm, FacturacionForm,
+    LoginForm, UsuarioForm
+)
 
 app = Flask(__name__)
 
-# Clave necesaria para la protección CSRF de los formularios
-app.config['SECRET_KEY'] = 'jm-ferreteria-clave-secreta-2026'
+# Clave necesaria para las sesiones y la protección CSRF de los formularios
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'jm-ferreteria-clave-secreta-2026')
 
 # Activa la protección CSRF en toda la aplicación
 csrf = CSRFProtect(app)
+
+# ----------------------------------------------------------
+# Configuración del sistema de login
+# ----------------------------------------------------------
+
+login_manager = LoginManager(app)
+
+# Si alguien entra a una página protegida sin sesión, lo envío al login
+login_manager.login_view = 'login'
+login_manager.login_message = "Debe iniciar sesión para acceder a esta página."
+login_manager.login_message_category = "warning"
+
+
+@login_manager.user_loader
+def load_user(id_usuario):
+    """Flask-Login usa esta función para recuperar al usuario de la sesión."""
+    return models.buscar_por_id(id_usuario)
 
 # Compruebo que la base de datos MySQL responda al iniciar
 if conexion.probar_conexion():
@@ -71,6 +99,90 @@ def cargar_proveedores(form):
 
 
 # ----------------------------------------------------------
+# Rutas del sistema de login
+# ----------------------------------------------------------
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Muestra el formulario de acceso y comprueba las credenciales."""
+    # Si el usuario ya inició sesión, lo mando directo al panel
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        # Busco el usuario en la base de datos
+        usuario = models.buscar_por_usuario(form.usuario.data)
+
+        # check_password_hash compara la contraseña escrita con el hash guardado
+        if usuario and check_password_hash(usuario.password, form.password.data):
+            login_user(usuario)
+            flash(f"Bienvenido, {usuario.nombre}.", "success")
+
+            # Si venía de una página protegida, lo devuelvo a esa página
+            siguiente = request.args.get('next')
+            if siguiente and siguiente.startswith('/'):
+                return redirect(siguiente)
+            return redirect(url_for('dashboard'))
+
+        # El mismo mensaje para usuario inexistente o contraseña incorrecta,
+        # así no se revela cuál de los dos datos está mal
+        flash("Usuario o contraseña incorrectos.", "danger")
+
+    return render_template('login.html', titulo_modulo="Iniciar sesión", form=form)
+
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    """Registra un usuario nuevo guardando su contraseña con hash."""
+    form = UsuarioForm()
+
+    if form.validate_on_submit():
+        nombre_usuario = form.usuario.data.strip().lower()
+
+        if models.existe_usuario(nombre_usuario):
+            flash(f"El usuario {nombre_usuario} ya está registrado.", "danger")
+        else:
+            # Nunca guardo la contraseña tal cual: guardo su hash
+            clave_cifrada = generate_password_hash(form.password.data)
+            models.crear_usuario(nombre_usuario, form.nombre.data, clave_cifrada)
+
+            flash("Usuario registrado correctamente. Ya puede iniciar sesión.", "success")
+            return redirect(url_for('login'))
+
+    return render_template('registro.html', titulo_modulo="Registro de usuario", form=form)
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Panel principal del sistema. Solo se ve con la sesión iniciada."""
+    total_facturado, total_pendiente = bd.totales_facturacion()
+
+    return render_template(
+        'dashboard.html',
+        titulo_modulo="Panel de administración",
+        total_productos=len(bd.listar_productos()),
+        total_agotados=bd.contar_agotados(),
+        total_clientes=len(bd.listar_clientes()),
+        total_proveedores=len(bd.listar_proveedores()),
+        total_facturas=len(bd.listar_facturas()),
+        total_facturado=total_facturado,
+        total_pendiente=total_pendiente
+    )
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Cierra la sesión del usuario."""
+    logout_user()
+    flash("Su sesión fue cerrada correctamente.", "success")
+    return redirect(url_for('login'))
+
+
+# ----------------------------------------------------------
 # Rutas de los módulos
 # ----------------------------------------------------------
 
@@ -86,6 +198,7 @@ def index():
 
 
 @app.route('/productos')
+@login_required
 def productos():
     """Módulo de productos: consulta el inventario guardado en la base de datos."""
     return render_template(
@@ -97,6 +210,7 @@ def productos():
 
 
 @app.route('/clientes')
+@login_required
 def clientes():
     """Módulo de clientes: consulta los clientes guardados."""
     return render_template(
@@ -107,6 +221,7 @@ def clientes():
 
 
 @app.route('/proveedores')
+@login_required
 def proveedores():
     """Módulo de proveedores: consulta los proveedores guardados."""
     return render_template(
@@ -117,6 +232,7 @@ def proveedores():
 
 
 @app.route('/facturacion')
+@login_required
 def facturacion():
     """Módulo de facturación: consulta las facturas guardadas."""
     total_facturado, total_pendiente = bd.totales_facturacion()
@@ -136,6 +252,7 @@ def facturacion():
 # ----------------------------------------------------------
 
 @app.route('/productos/nuevo', methods=['GET', 'POST'])
+@login_required
 def nuevo_producto():
     """Registra un producto nuevo en la base de datos."""
     form = ProductoForm()
@@ -169,6 +286,7 @@ def nuevo_producto():
 
 
 @app.route('/productos/editar/<int:id_producto>', methods=['GET', 'POST'])
+@login_required
 def editar_producto(id_producto):
     """Edita un producto usando la misma clase de formulario."""
     producto = bd.obtener_producto(id_producto)
@@ -211,6 +329,7 @@ def editar_producto(id_producto):
 
 
 @app.route('/productos/eliminar/<int:id_producto>', methods=['POST'])
+@login_required
 def borrar_producto(id_producto):
     """Elimina un producto de la base de datos."""
     producto = bd.obtener_producto(id_producto)
@@ -225,6 +344,7 @@ def borrar_producto(id_producto):
 
 
 @app.route('/clientes/nuevo', methods=['GET', 'POST'])
+@login_required
 def nuevo_cliente():
     """Registra un cliente nuevo."""
     form = ClienteForm()
@@ -251,6 +371,7 @@ def nuevo_cliente():
 
 
 @app.route('/proveedores/nuevo', methods=['GET', 'POST'])
+@login_required
 def nuevo_proveedor():
     """Registra un proveedor nuevo."""
     form = ProveedorForm()
@@ -277,6 +398,7 @@ def nuevo_proveedor():
 
 
 @app.route('/facturacion/nueva', methods=['GET', 'POST'])
+@login_required
 def nueva_factura():
     """Registra una factura nueva."""
     form = FacturacionForm()
