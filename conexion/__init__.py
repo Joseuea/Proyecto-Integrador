@@ -1,5 +1,5 @@
 """
-Paquete conexion: centraliza el acceso a la base de datos MySQL.
+Paquete conexion: centraliza el acceso a la base de datos PostgreSQL.
 """
 
 from conexion.conexion import (
@@ -7,7 +7,11 @@ from conexion.conexion import (
     consultar,
     consultar_uno,
     ejecutar,
-    probar_conexion
+    probar_conexion,
+    crear_tablas
 )
 
-__all__ = ["obtener_conexion", "consultar", "consultar_uno", "ejecutar", "probar_conexion"]
+__all__ = [
+    "obtener_conexion", "consultar", "consultar_uno",
+    "ejecutar", "probar_conexion", "crear_tablas"
+]

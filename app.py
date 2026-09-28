@@ -46,12 +46,16 @@ def load_user(id_usuario):
     """Flask-Login usa esta función para recuperar al usuario de la sesión."""
     return models.buscar_por_id(id_usuario)
 
-# Compruebo que la base de datos MySQL responda al iniciar
+# Al iniciar compruebo la conexión y preparo las tablas.
+# Como el esquema usa CREATE TABLE IF NOT EXISTS, no se borra nada
+# de lo que ya estaba guardado.
 if conexion.probar_conexion():
-    print("Conexión con MySQL establecida correctamente.")
+    print("Conexión con PostgreSQL establecida correctamente.")
+    if conexion.crear_tablas():
+        print("Tablas verificadas correctamente.")
 else:
-    print("ATENCIÓN: no se pudo conectar con MySQL.")
-    print("Revise que el servidor esté encendido y que haya ejecutado sql/esquema.sql")
+    print("ATENCIÓN: no se pudo conectar con PostgreSQL.")
+    print("Revise que el servidor esté encendido y que los datos de acceso sean correctos.")
 
 
 # ----------------------------------------------------------
@@ -95,6 +99,13 @@ def cargar_proveedores(form):
     """Llena el desplegable de proveedores del formulario de productos."""
     form.id_proveedor.choices = [("", "-- Sin proveedor asignado --")] + [
         (str(p["id_proveedor"]), p["empresa"]) for p in bd.listar_proveedores()
+    ]
+
+
+def cargar_clientes(form):
+    """Llena el desplegable de clientes del formulario de facturas."""
+    form.cliente.choices = [("", "-- Seleccione un cliente --")] + [
+        (str(c["id_cliente"]), c["nombre"]) for c in bd.listar_clientes()
     ]
 
 
@@ -343,6 +354,10 @@ def borrar_producto(id_producto):
     return redirect(url_for('productos'))
 
 
+# ----------------------------------------------------------
+# Módulo de clientes: crear, editar y eliminar
+# ----------------------------------------------------------
+
 @app.route('/clientes/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo_cliente():
@@ -357,7 +372,7 @@ def nuevo_cliente():
             form.correo.data,
             form.ciudad.data,
             form.tipo.data,
-            1 if form.activo.data else 0
+            form.activo.data
         )
         flash(f"El cliente {form.nombre.data} fue registrado correctamente.", "success")
         return redirect(url_for('clientes'))
@@ -369,6 +384,60 @@ def nuevo_cliente():
         accion="Registrar"
     )
 
+
+@app.route('/clientes/editar/<int:id_cliente>', methods=['GET', 'POST'])
+@login_required
+def editar_cliente(id_cliente):
+    """Edita un cliente reutilizando la misma clase de formulario."""
+    cliente = bd.obtener_cliente(id_cliente)
+
+    if cliente is None:
+        flash("El cliente solicitado no existe.", "danger")
+        return redirect(url_for('clientes'))
+
+    # data=cliente carga los datos actuales dentro del formulario
+    form = ClienteForm(data=cliente)
+
+    if form.validate_on_submit():
+        bd.actualizar_cliente(
+            id_cliente,
+            form.cedula.data,
+            form.nombre.data,
+            form.telefono.data,
+            form.correo.data,
+            form.ciudad.data,
+            form.tipo.data,
+            form.activo.data
+        )
+        flash(f"El cliente {form.nombre.data} fue actualizado.", "success")
+        return redirect(url_for('clientes'))
+
+    return render_template(
+        'formulario_cliente.html',
+        titulo_modulo="Editar cliente",
+        form=form,
+        accion="Actualizar"
+    )
+
+
+@app.route('/clientes/eliminar/<int:id_cliente>', methods=['POST'])
+@login_required
+def borrar_cliente(id_cliente):
+    """Elimina un cliente de la base de datos."""
+    cliente = bd.obtener_cliente(id_cliente)
+
+    if cliente is None:
+        flash("El cliente solicitado no existe.", "danger")
+    else:
+        bd.eliminar_cliente(id_cliente)
+        flash(f"El cliente {cliente['nombre']} fue eliminado.", "success")
+
+    return redirect(url_for('clientes'))
+
+
+# ----------------------------------------------------------
+# Módulo de proveedores: crear, editar y eliminar
+# ----------------------------------------------------------
 
 @app.route('/proveedores/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -384,7 +453,7 @@ def nuevo_proveedor():
             form.contacto.data,
             form.telefono.data,
             form.correo.data,
-            1 if form.convenio.data else 0
+            form.convenio.data
         )
         flash(f"El proveedor {form.empresa.data} fue registrado correctamente.", "success")
         return redirect(url_for('proveedores'))
@@ -397,22 +466,71 @@ def nuevo_proveedor():
     )
 
 
+@app.route('/proveedores/editar/<int:id_proveedor>', methods=['GET', 'POST'])
+@login_required
+def editar_proveedor(id_proveedor):
+    """Edita un proveedor reutilizando la misma clase de formulario."""
+    proveedor = bd.obtener_proveedor(id_proveedor)
+
+    if proveedor is None:
+        flash("El proveedor solicitado no existe.", "danger")
+        return redirect(url_for('proveedores'))
+
+    form = ProveedorForm(data=proveedor)
+
+    if form.validate_on_submit():
+        bd.actualizar_proveedor(
+            id_proveedor,
+            form.ruc.data,
+            form.empresa.data,
+            form.producto.data,
+            form.contacto.data,
+            form.telefono.data,
+            form.correo.data,
+            form.convenio.data
+        )
+        flash(f"El proveedor {form.empresa.data} fue actualizado.", "success")
+        return redirect(url_for('proveedores'))
+
+    return render_template(
+        'formulario_proveedor.html',
+        titulo_modulo="Editar proveedor",
+        form=form,
+        accion="Actualizar"
+    )
+
+
+@app.route('/proveedores/eliminar/<int:id_proveedor>', methods=['POST'])
+@login_required
+def borrar_proveedor(id_proveedor):
+    """Elimina un proveedor. Sus productos quedan sin proveedor asignado."""
+    proveedor = bd.obtener_proveedor(id_proveedor)
+
+    if proveedor is None:
+        flash("El proveedor solicitado no existe.", "danger")
+    else:
+        bd.eliminar_proveedor(id_proveedor)
+        flash(f"El proveedor {proveedor['empresa']} fue eliminado.", "success")
+
+    return redirect(url_for('proveedores'))
+
+
+# ----------------------------------------------------------
+# Módulo de facturación: crear, editar y eliminar
+# ----------------------------------------------------------
+
 @app.route('/facturacion/nueva', methods=['GET', 'POST'])
 @login_required
 def nueva_factura():
     """Registra una factura nueva."""
     form = FacturacionForm()
-
-    # El desplegable guarda el id_cliente, que es la clave foránea
-    form.cliente.choices = [("", "-- Seleccione un cliente --")] + [
-        (str(c["id_cliente"]), c["nombre"]) for c in bd.listar_clientes()
-    ]
+    cargar_clientes(form)
 
     if form.validate_on_submit():
         bd.agregar_factura(
             form.numero.data,
-            form.fecha.data.strftime("%Y-%m-%d"),
-            form.cliente.data,
+            form.fecha.data,
+            form.cliente.data or None,
             form.total.data,
             form.estado.data
         )
@@ -427,9 +545,65 @@ def nueva_factura():
     )
 
 
+@app.route('/facturacion/editar/<int:id_factura>', methods=['GET', 'POST'])
+@login_required
+def editar_factura(id_factura):
+    """Edita una factura reutilizando la misma clase de formulario."""
+    factura = bd.obtener_factura(id_factura)
+
+    if factura is None:
+        flash("La factura solicitada no existe.", "danger")
+        return redirect(url_for('facturacion'))
+
+    # El desplegable trabaja con texto, así que convierto el id del cliente
+    datos = dict(factura)
+    datos["cliente"] = str(datos["id_cliente"]) if datos["id_cliente"] else ""
+
+    form = FacturacionForm(data=datos)
+    cargar_clientes(form)
+
+    if form.validate_on_submit():
+        bd.actualizar_factura(
+            id_factura,
+            form.numero.data,
+            form.fecha.data,
+            form.cliente.data or None,
+            form.total.data,
+            form.estado.data
+        )
+        flash(f"La factura {form.numero.data} fue actualizada.", "success")
+        return redirect(url_for('facturacion'))
+
+    return render_template(
+        'formulario_facturacion.html',
+        titulo_modulo="Editar factura",
+        form=form,
+        accion="Actualizar"
+    )
+
+
+@app.route('/facturacion/eliminar/<int:id_factura>', methods=['POST'])
+@login_required
+def borrar_factura(id_factura):
+    """Elimina una factura de la base de datos."""
+    factura = bd.obtener_factura(id_factura)
+
+    if factura is None:
+        flash("La factura solicitada no existe.", "danger")
+    else:
+        bd.eliminar_factura(id_factura)
+        flash(f"La factura {factura['numero']} fue eliminada.", "success")
+
+    return redirect(url_for('facturacion'))
+
+
 # ----------------------------------------------------------
 # Ejecución de la aplicación
 # ----------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # En la computadora se usa el puerto 5000;
+    # en Render el puerto lo asigna el servidor.
+    puerto = int(os.environ.get("PORT", 5000))
+    modo_debug = os.environ.get("FLASK_DEBUG", "1") == "1"
+    app.run(host="0.0.0.0", port=puerto, debug=modo_debug)

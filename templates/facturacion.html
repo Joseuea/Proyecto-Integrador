@@ -56,6 +56,7 @@
                         <th>Cliente</th>
                         <th class="text-end">Total</th>
                         <th class="text-center">Estado</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,7 +64,13 @@
                     <tr>
                         <td>{{ factura.numero }}</td>
                         <td>{{ factura.fecha }}</td>
-                        <td>{{ factura.cliente|title }}</td>
+                        <td>
+                            <!-- El nombre y la ciudad vienen del JOIN con clientes -->
+                            {{ factura.cliente|title }}
+                            {% if factura.ciudad_cliente %}
+                            <span class="small text-muted d-block">{{ factura.ciudad_cliente }}</span>
+                            {% endif %}
+                        </td>
                         <td class="text-end fw-bold">${{ "%.2f"|format(factura.total) }}</td>
                         <td class="text-center">
                             <!-- Cambio el color según el estado de la factura -->
@@ -72,6 +79,16 @@
                             {% else %}
                             <span class="badge bg-warning text-dark">{{ factura.estado }}</span>
                             {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('editar_factura', id_factura=factura.id_factura) }}"
+                                class="btn btn-outline-obra btn-sm">✏️ Editar</a>
+
+                            <form method="POST" action="{{ url_for('borrar_factura', id_factura=factura.id_factura) }}"
+                                class="d-inline" onsubmit="return confirm('¿Desea eliminar esta factura?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">🗑 Eliminar</button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

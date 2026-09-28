@@ -28,7 +28,9 @@
                         <th>Producto que provee</th>
                         <th>Contacto</th>
                         <th>Teléfono</th>
+                        <th class="text-center">Productos</th>
                         <th class="text-center">Convenio</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,12 +42,26 @@
                         <td>{{ proveedor.contacto }}</td>
                         <td>{{ proveedor.telefono }}</td>
                         <td class="text-center">
+                            <!-- Dato que viene del JOIN con la tabla productos -->
+                            <span class="badge bg-secondary">{{ proveedor.total_productos }}</span>
+                        </td>
+                        <td class="text-center">
                             <!-- Marco cuáles proveedores tienen convenio vigente -->
                             {% if proveedor.convenio %}
                             <span class="badge bg-success">Con convenio</span>
                             {% else %}
                             <span class="badge bg-warning text-dark">Sin convenio</span>
                             {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('editar_proveedor', id_proveedor=proveedor.id_proveedor) }}"
+                                class="btn btn-outline-obra btn-sm">✏️ Editar</a>
+
+                            <form method="POST" action="{{ url_for('borrar_proveedor', id_proveedor=proveedor.id_proveedor) }}"
+                                class="d-inline" onsubmit="return confirm('¿Desea eliminar este proveedor?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">🗑 Eliminar</button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

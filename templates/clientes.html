@@ -38,6 +38,22 @@
                         {% else %}
                         <span class="badge bg-secondary">Inactivo</span>
                         {% endif %}
+
+                        <!-- Dato que viene del JOIN con la tabla facturas -->
+                        <p class="small text-muted mt-2 mb-2">
+                            🧾 {{ cliente.total_facturas }} factura(s) registrada(s)
+                        </p>
+
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{{ url_for('editar_cliente', id_cliente=cliente.id_cliente) }}"
+                                class="btn btn-outline-obra btn-sm">✏️ Editar</a>
+
+                            <form method="POST" action="{{ url_for('borrar_cliente', id_cliente=cliente.id_cliente) }}"
+                                onsubmit="return confirm('¿Desea eliminar este cliente?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">🗑 Eliminar</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
