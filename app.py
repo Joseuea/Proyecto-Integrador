@@ -50,11 +50,11 @@ def load_user(id_usuario):
 # Como el esquema usa CREATE TABLE IF NOT EXISTS, no se borra nada
 # de lo que ya estaba guardado.
 if conexion.probar_conexion():
-    print("Conexión con PostgreSQL establecida correctamente.")
+    print(f"Conexión con {conexion.nombre_motor()} establecida correctamente.")
     if conexion.crear_tablas():
         print("Tablas verificadas correctamente.")
 else:
-    print("ATENCIÓN: no se pudo conectar con PostgreSQL.")
+    print(f"ATENCIÓN: no se pudo conectar con {conexion.nombre_motor()}.")
     print("Revise que el servidor esté encendido y que los datos de acceso sean correctos.")
 
 

@@ -8,7 +8,26 @@ Todas las consultas usan parámetros %s en lugar de unir texto,
 para evitar problemas de seguridad.
 """
 
+from datetime import date, datetime
+
 from conexion import consultar, consultar_uno, ejecutar
+
+
+def _fecha_texto(valor):
+    """Convierte la fecha a texto, que es el formato que aceptan los dos motores."""
+    if isinstance(valor, (date, datetime)):
+        return valor.strftime("%Y-%m-%d")
+    return valor
+
+
+def _fecha_objeto(fila):
+    """
+    SQLite devuelve la fecha como texto y PostgreSQL como fecha.
+    La dejo siempre como fecha para que el formulario de edición la entienda.
+    """
+    if fila and isinstance(fila.get("fecha"), str):
+        fila["fecha"] = datetime.strptime(fila["fecha"], "%Y-%m-%d").date()
+    return fila
 
 
 # ==========================================================
@@ -182,7 +201,7 @@ def listar_facturas():
 
 
 def obtener_factura(id_factura):
-    return consultar_uno("SELECT * FROM facturas WHERE id_factura = %s", (id_factura,))
+    return _fecha_objeto(consultar_uno("SELECT * FROM facturas WHERE id_factura = %s", (id_factura,)))
 
 
 def agregar_factura(numero, fecha, id_cliente, total, estado):
@@ -190,7 +209,7 @@ def agregar_factura(numero, fecha, id_cliente, total, estado):
         INSERT INTO facturas (numero, fecha, id_cliente, total, estado)
         VALUES (%s, %s, %s, %s, %s)
     """
-    return ejecutar(sql, (numero, fecha, id_cliente, total, estado))
+    return ejecutar(sql, (numero, _fecha_texto(fecha), id_cliente, total, estado))
 
 
 def actualizar_factura(id_factura, numero, fecha, id_cliente, total, estado):
@@ -199,7 +218,7 @@ def actualizar_factura(id_factura, numero, fecha, id_cliente, total, estado):
         SET numero = %s, fecha = %s, id_cliente = %s, total = %s, estado = %s
         WHERE id_factura = %s
     """
-    return ejecutar(sql, (numero, fecha, id_cliente, total, estado, id_factura))
+    return ejecutar(sql, (numero, _fecha_texto(fecha), id_cliente, total, estado, id_factura))
 
 
 def eliminar_factura(id_factura):
